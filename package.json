@@ -1,0 +1,36 @@
+{
+  "name": "angular-jsonrpc-client",
+  "description": "A JSON-RPC 2.0 client for AngularJS",
+  "version": "0.0.1",
+  "private": true,
+  "main": "src/angular-jsonrpc-client.js",
+  "author": "Joost Vunderink",
+  "keywords": [
+    "countries"
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "chai": "^1.10.0",
+    "grunt": "^0.4.5",
+    "grunt-cli": "^0.1.13",
+    "grunt-contrib-jshint": "^0.10.0",
+    "grunt-contrib-uglify": "^0.6.0",
+    "grunt-karma": "^0.9.0",
+    "karma": "^0.12.28",
+    "karma-chai": "^0.1.0",
+    "karma-chrome-launcher": "^0.1.7",
+    "karma-firefox-launcher": "^0.1.3",
+    "karma-mocha": "^0.1.10",
+    "karma-mocha-reporter": "^0.3.1",
+    "karma-sinon": "^1.0.4",
+    "mocha": "^2.0.1",
+    "sinon": "^1.12.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joostvunderink/angular-jsonrpc-client"
+  },
+  "engines": {
+    "node": ">=0.10.0"
+  }
+}
