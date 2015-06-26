@@ -1,6 +1,6 @@
 {
   "name": "angular-jsonrpc-client",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "main": "src/angular-jsonrpc-client.js",
   "ignore": [
     "Gruntfile.js",
