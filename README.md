@@ -33,7 +33,7 @@ Or, if an error happens, the server would reply with an object like this:
     "id": "1",
     "error": {
         "code": 666,
-        "message": "There were not enough bananas."
+        "message": "There were not enough bananas.",
         "data": {
             "available_bananas": 17
         }
