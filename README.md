@@ -6,39 +6,45 @@ angular-jsonrpc-client provides a configurable client to perform [JSON-RPC 2.0][
 
 JSON-RPC is a protocol where you send a JSON object with a method name and method parameters to a server, and you get a response with the result of the operation. Let's say you send the following JSON:
 
-```{
-    "jsonrpc": "2.0",
-    "id": "1",
-    "method": "buy_fruit",
-    "params": {
-        "type": "banana",
-        "amount": 42
+```
+    {
+        "jsonrpc": "2.0",
+        "id": "1",
+        "method": "buy_fruit",
+        "params": {
+            "type": "banana",
+            "amount": 42
+        }
     }
-}```
+```
 
 The server might reply with an object like this:
 
-```{
-    "jsonrpc": "2.0",
-    "id": "1",
-    "result": {
-        "cost": 24.65,
+```
+    {
+        "jsonrpc": "2.0",
+        "id": "1",
+        "result": {
+            "cost": 24.65
+        }
     }
-}```
+```
 
 Or, if an error happens, the server would reply with an object like this:
 
-```{
-    "jsonrpc": "2.0",
-    "id": "1",
-    "error": {
-        "code": 666,
-        "message": "There were not enough bananas.",
-        "data": {
-            "available_bananas": 17
+```
+    {
+        "jsonrpc": "2.0",
+        "id": "1",
+        "error": {
+            "code": 666,
+            "message": "There were not enough bananas.",
+            "data": {
+                "available_bananas": 17
+            }
         }
     }
-}```
+```
 
 In addition to such a JSON-RPC server error, it could also happen that something goes wrong with sending the request to the server. For example, the server could be down, or the client could be configured with the wrong location of the server. In that case, you would also experience an error situation, although different from JSON-RPC errors.
 
