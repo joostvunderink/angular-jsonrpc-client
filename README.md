@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/joostvunderink/angular-jsonrpc-client.svg?branch=master)](https://travis-ci.org/joostvunderink/angular-jsonrpc-client)
+
 # Introduction
 
 angular-jsonrpc-client provides a configurable client to perform [JSON-RPC 2.0][JSONRPC2] calls via HTTP.
