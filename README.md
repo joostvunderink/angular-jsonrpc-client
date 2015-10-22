@@ -155,6 +155,17 @@ jsonrpcConfigProvider.set({
 
 This changes the return value of `jsonrpc.request()` from a `$q` promise into the return value of `$http.request()`. See `examples/example2.html` for a working example of this. Doing this makes your client code more complex and is not recommended.
 
+# Examples
+
+In the `examples` dir, there are a few examples. You can look at the code there, and you can also see the code in action. To do that, you need to make sure that a the local example JSON-RPC server is running:
+
+```
+npm install
+cd example
+node jsonrpc.server.js
+```
+
+Now you can open the example html files in your browser and the calls should work.
 
 # TODO
 

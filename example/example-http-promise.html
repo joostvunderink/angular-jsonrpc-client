@@ -1,0 +1,58 @@
+<html>
+<head>
+    <title>angular-jsonrpc-client example 2</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.16/angular.js"></script>
+    <script src="../src/angular-jsonrpc-client.js"></script>
+    <script>
+        angular
+            .module('TestApp', ['angular-jsonrpc-client'])
+            .config(function(jsonrpcConfigProvider) {
+                jsonrpcConfigProvider.set({
+                    url: 'http://localhost:5080/rpc',
+                    returnHttpPromise: true
+                });
+            })
+            .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+                $scope.result = '';
+                $scope.methodCall = 'version';
+
+                $scope.performCall = function() {
+                    $scope.result = '';
+                    $scope.error = '';
+                    jsonrpc.request($scope.methodCall, {})
+                        .then(function(response) {
+                            $scope.httpStatusCode = response.status;
+                            if (response.data.result) {
+                                $scope.callSuccessful = true;
+                                $scope.result = response.data.result;
+                            }
+                            else {
+                                $scope.callSuccessful = false;
+                                $scope.error = response.error;
+                            }
+                        })
+                        .catch(function(error) {
+                            $scope.callSuccessful = false;
+                            $scope.httpStatusCode = error.status;
+                            $scope.error = error;
+                        });
+                };
+            }]);
+    </script>
+</head>
+<body ng-app="TestApp">
+    <div ng-controller="TestController" id="container">
+        <p>Method name: <input type="text" ng-model="methodCall">
+            <button ng-click="performCall()">Call now</button></p>
+        <hr>
+        <p ng-show="result || error">HTTP status code: {{ httpStatusCode }}</p>
+        <p ng-show="result || error">JSON-RPC call was {{ callSuccessful ? '' : 'not' }} successful.</p>
+        <p ng-show="result">JSON-RPC result:</p>
+        <pre>{{ result }}</pre>
+        <p ng-show="error">JSON-RPC or HTTP error:</p>
+        <pre>{{ error }}</pre>
+        <p ng-show="error.status === 0" style="background-color: #ffb0b8;">It looks like the local JSON-RPC server is not running. If this is indeed the case, please start it.</p>
+    </div>
+</body>
+</html>
