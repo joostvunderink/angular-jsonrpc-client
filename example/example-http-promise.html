@@ -5,24 +5,28 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.16/angular.js"></script>
     <script src="../src/angular-jsonrpc-client.js"></script>
     <script>
+        var url = 'http://localhost:5080/rpc';
         angular
             .module('TestApp', ['angular-jsonrpc-client'])
             .config(function(jsonrpcConfigProvider) {
                 jsonrpcConfigProvider.set({
-                    url: 'http://localhost:5080/rpc',
+                    url: url,
                     returnHttpPromise: true
                 });
             })
             .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+                $scope.url = url;
                 $scope.result = '';
                 $scope.methodCall = 'version';
 
                 $scope.performCall = function() {
                     $scope.result = '';
                     $scope.error = '';
+                    $scope.httpResponse = '';
                     jsonrpc.request($scope.methodCall, {})
                         .then(function(response) {
                             $scope.httpStatusCode = response.status;
+                            $scope.httpResponse = response;
                             if (response.data.result) {
                                 $scope.callSuccessful = true;
                                 $scope.result = response.data.result;
@@ -43,11 +47,14 @@
 </head>
 <body ng-app="TestApp">
     <div ng-controller="TestController" id="container">
+        <p>Server: <code>{{ url }}</code></p>
         <p>Method name: <input type="text" ng-model="methodCall">
             <button ng-click="performCall()">Call now</button></p>
         <hr>
         <p ng-show="result || error">HTTP status code: {{ httpStatusCode }}</p>
         <p ng-show="result || error">JSON-RPC call was {{ callSuccessful ? '' : 'not' }} successful.</p>
+        <p ng-show="result">HTTP response:</p>
+        <pre>{{ httpResponse }}</pre>
         <p ng-show="result">JSON-RPC result:</p>
         <pre>{{ result }}</pre>
         <p ng-show="error">JSON-RPC or HTTP error:</p>
