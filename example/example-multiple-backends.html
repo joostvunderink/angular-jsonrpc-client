@@ -1,0 +1,61 @@
+<html>
+<head>
+    <title>angular-jsonrpc-client example 1</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.16/angular.js"></script>
+    <script src="../src/angular-jsonrpc-client.js"></script>
+    <script>
+        var firstBackendUrl = 'http://localhost:5080/rpc';
+        var secondBackendUrl = 'http://localhost:6123/rpc';
+        angular
+            .module('TestApp', ['angular-jsonrpc-client'])
+            .config(function(jsonrpcConfigProvider) {
+                console.info(jsonrpcConfigProvider);
+                jsonrpcConfigProvider.set({
+                    backends: [{
+                        name: 'first',
+                        url: firstBackendUrl,
+                    },
+                    {
+                        name: 'second',
+                        url: secondBackendUrl,
+                    }],
+                    returnHttpPromise: false
+                });
+            })
+            .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+                $scope.firstBackendUrl = firstBackendUrl;
+                $scope.secondBackendUrl = secondBackendUrl;
+                $scope.result = '';
+                $scope.methodCall = 'version';
+
+                $scope.performCall = function(backendName) {
+                    $scope.result = '';
+                    $scope.error = '';
+                    jsonrpc.request(backendName, $scope.methodCall, {})
+                        .then(function(result) {
+                            $scope.result = result;
+                        })
+                        .catch(function(error) {
+                            $scope.error = error;
+                        });
+                };
+            }]);
+    </script>
+</head>
+<body ng-app="TestApp">
+    <div ng-controller="TestController">
+        <p>First Backend: <code>{{ firstBackendUrl }}</code></p>
+        <p>Second Backend: <code>{{ secondBackendUrl }}</code></p>
+        <p>Method name: <input type="text" ng-model="methodCall">
+            <button ng-click="performCall('first')">Call on first backend</button>
+            <button ng-click="performCall('second')">Call on second backend</button></p>
+        <hr>
+        <p ng-show="result">JSON-RPC result:</p>
+        <pre>{{ result }}</pre>
+        <p ng-show="error">JSON-RPC error:</p>
+        <pre>{{ error }}</pre>
+        <p ng-show="error.message === 'Connection refused at http://localhost:5080/rpc'" style="background-color: #ffb0b8;">It looks like the local JSON-RPC server is not running. If this is indeed the case, please start it.</p>
+    </div>
+</body>
+</html>
