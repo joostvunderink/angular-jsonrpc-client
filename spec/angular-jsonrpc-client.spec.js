@@ -6,7 +6,7 @@ describe('jsonrpc module', function() {
     it('should have the default configuration', function(done) {
       inject(function(jsonrpcConfig) {
         expect(Object.keys(jsonrpcConfig).length).to.equal(2);
-        expect(jsonrpcConfig.url).to.be.null;
+        expect(jsonrpcConfig.backends.length).to.equal(0);
         expect(jsonrpcConfig.returnHttpPromise).to.be.false;
         done();
       });
@@ -40,7 +40,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -78,9 +81,13 @@ describe('jsonrpc module', function() {
       });
     });
 
+
     describe('jsonrpc.request with http promise return value using then/catch', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: true
       };
 
@@ -118,7 +125,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with http promise return value using success/error', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: true
       };
 
@@ -177,7 +187,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for server error', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -229,7 +242,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for connection refused', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -267,7 +283,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for 404', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -305,7 +324,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for 500 other error', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -344,7 +366,10 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for an unknown error', function() {
       var mockConfig = {
-        url: url,
+        backends: [{
+          name: 'main',
+          url: url,
+        }],
         returnHttpPromise: false
       };
 
@@ -380,6 +405,126 @@ describe('jsonrpc module', function() {
         });
       });
     });
+  });
+
+  describe('jsonrpc.request for multiple backends', function() {
+    var methodName = 'version';
+    var args = {};
+    function _getHttpData(id) {
+      return {
+        expected: {
+          method: 'POST',
+          url: url,
+          body: {
+            jsonrpc: "2.0",
+            method: methodName,
+            params: {},
+            id: id
+          }
+        },
+        returnValue: {
+          jsonrpc: "2.0",
+          id: id,
+          result: { version: '1.7.9' }
+        }
+      };
+    }
+
+    var url = 'http://example.com:80/rpc';
+    describe('jsonrpc.request with jsonrpc promise return value', function() {
+      var firstBackendName = 'first';
+      var secondBackendName = 'second';
+      var mockConfig = {
+        backends: [{
+          name: firstBackendName,
+          url: 'http://does.not.matter'
+        },
+        {
+          name: secondBackendName,
+          url: url
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should perform a jsonrpc call successfully', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                                                  .respond(httpData.returnValue);
+
+          jsonrpc.request(secondBackendName, methodName, args)
+            .then(function(data) {
+              // In this case, we get a resolved 'result' object. Therefore, we can call
+              // .version on it directly.
+              expect(typeof(data)).to.equal('object');
+              expect(Object.keys(data).length).to.equal(1);
+              expect(data.version).to.equal('1.7.9');
+              done();
+            })
+            .catch(function(err) {
+              // should not come here
+              console.log(err);
+              done(err);
+            });
+
+          $httpBackend.flush();
+        });
+      });
+    });
+
+    describe('jsonrpc.request to invalid backend', function() {
+      var invalidBackendName = 'invalid';
+      var mockConfig = {
+        backends: [{
+          name: 'first',
+          url: 'http://does.not.matter'
+        },
+        {
+          name: 'second',
+          url: 'http://also.matters.not'
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should error on request', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                                                  .respond(httpData.returnValue);
+
+          jsonrpc.request(invalidBackendName, methodName, args)
+            .then(function(data) {
+              done('should not get here');
+            })
+            .catch(function(err) {
+              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_CONFIG);
+              expect(err.message).to.equal('Backend "invalid" has not been configured.');
+              done();
+            });
+
+          $httpBackend.flush();
+        });
+      });
+
+    });
+
+
   });
 });
 
