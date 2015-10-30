@@ -4,21 +4,40 @@ var ServerMiddleware = jsonrpc.transports.server.middleware;
 var express          = require('express');
 var bodyParser       = require('body-parser');
 
-var app = express();
-app.use(CORSHeaders);
-app.use(bodyParser());
+function startFirstServer() {
+  var app = express();
+  app.use(CORSHeaders);
+  app.use(bodyParser());
 
-var jsonRpcMiddlewareServer = new Server(new ServerMiddleware(), {
-  version: function(obj, callback) {
-    console.info('RPC method "version" called.');
-    callback(undefined, { version: '0.42.666' });
-  }
-});
+  var jsonRpcMiddlewareServer = new Server(new ServerMiddleware(), {
+    version: function(obj, callback) {
+      console.info('RPC method "version" called.');
+      callback(undefined, { version: '0.42.666' });
+    }
+  });
 
-app.use('/rpc', jsonRpcMiddlewareServer.transport.middleware);
-app.listen(5080);
-console.info('Starting server on http://localhost:5080...');
-console.info('Please open the example.html files in your browser now.');
+  app.use('/rpc', jsonRpcMiddlewareServer.transport.middleware);
+  app.listen(5080);
+  console.info('Starting first server on http://localhost:5080...');
+}
+
+function startSecondServer() {
+  var app = express();
+  app.use(CORSHeaders);
+  app.use(bodyParser());
+
+  var jsonRpcMiddlewareServer = new Server(new ServerMiddleware(), {
+    version: function(obj, callback) {
+      console.info('RPC method "version" called.');
+      callback(undefined, { version: '6.1.23' });
+    }
+  });
+
+  app.use('/rpc', jsonRpcMiddlewareServer.transport.middleware);
+  app.listen(6123);
+  console.info('Starting second server on http://localhost:6123...');
+}
+
 
 function CORSHeaders(req, res, next) {
   if (req.headers.origin) {
@@ -40,3 +59,11 @@ function CORSHeaders(req, res, next) {
     next();
   }
 }
+
+function main() {
+  startFirstServer();
+  startSecondServer();
+  console.info('Please open the example html files in your browser now.');
+}
+
+main();

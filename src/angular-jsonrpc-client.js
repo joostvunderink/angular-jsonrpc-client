@@ -11,6 +11,7 @@
   var id = 0;
   var ERROR_TYPE_SERVER = 'JsonRpcServerError';
   var ERROR_TYPE_TRANSPORT = 'JsonRpcTransportError';
+  var ERROR_TYPE_CONFIG = 'JsonRpcConfigError';
 
   function JsonRpcTransportError(error) {
       this.name = ERROR_TYPE_TRANSPORT;
@@ -25,13 +26,21 @@
   }
   JsonRpcServerError.prototype = Error.prototype;  
 
+  function JsonRpcConfigError(error) {
+      this.name = ERROR_TYPE_CONFIG;
+      this.message = error;
+  }
+  JsonRpcConfigError.prototype = Error.prototype;  
+
   function jsonrpc($q, $http, jsonrpcConfig) {
     return {
       request              : request,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
+      ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
       JsonRpcTransportError: JsonRpcTransportError,
-      JsonRpcServerError   : JsonRpcServerError
+      JsonRpcServerError   : JsonRpcServerError,
+      JsonRpcConfigError   : JsonRpcConfigError
     };
 
     function _getInputData(methodName, args) {
@@ -44,16 +53,47 @@
       }
     }
 
-    function request(methodName, args) {
-      if (!jsonrpcConfig.url) {
-        throw new Error('Please configure the jsonrpc client first.');
+    function _findServer(serverName) {
+      for (var i = 0; i < jsonrpcConfig.servers.length; i++) {
+        if (jsonrpcConfig.servers[i].name === serverName) {
+          return jsonrpcConfig.servers[i];
+        }
+      }
+      return null;
+    }
+
+    function request(arg1, arg2, arg3) {
+      var serverName = 'main';
+      var methodName, args;
+      if (arguments.length === 2) {
+        methodName = arg1;
+        args = arg2;
+      }
+      else {
+        serverName = arg1;
+        methodName = arg2;
+        args = arg3;
+      }
+
+      var deferred = $q.defer();
+
+      if (jsonrpcConfig.servers.length === 0) {
+        deferred.reject(new JsonRpcConfigError('Please configure the jsonrpc client first.'));
+        return deferred.promise;
+      }
+
+      var backend = _findServer(serverName);
+
+      if (!backend) {
+        deferred.reject(new JsonRpcConfigError('Server "' + serverName + '" has not been configured.'));
+        return deferred.promise;
       }
 
       var inputData = _getInputData(methodName, args);
 
       var req = {
        method: 'POST',
-       url: jsonrpcConfig.url,
+       url: backend.url,
        headers: {
          'Content-Type': 'application/json'
        },
@@ -76,7 +116,6 @@
         // We are assuming that the server can use either 200 or 500 as
         // http return code in situation 2. That depends on the server
         // implementation and is not determined by the JSON-RPC spec.
-        var deferred = $q.defer();
         promise.success(function(data, status, headers, config) {
           if (data.result) {
             // Situation 1
@@ -92,11 +131,11 @@
           var err;
           if (status === 0) {
             // Situation 3
-            err = 'Connection refused at ' + jsonrpcConfig.url;
+            err = 'Connection refused at ' + backend.url;
           }
           else if (status === 404) {
             // Situation 3
-            err = '404 not found at ' + jsonrpcConfig.url;
+            err = '404 not found at ' + backend.url;
           }
           else if (status === 500) {
             // This could be either 2 or 3. We have to look at the returned data
@@ -108,7 +147,7 @@
             }
             else {
               // Situation 3
-              err = '500 internal server error at ' + jsonrpcConfig.url + ': ' + data;
+              err = '500 internal server error at ' + backend.url + ': ' + data;
             }
           }
           else {
@@ -131,7 +170,7 @@
 
   function jsonrpcConfig() {
     var config = {
-      url: null,
+      servers: [],
       returnHttpPromise: false
     };
 
@@ -140,14 +179,23 @@
         throw new Error('Argument of "set" must be an object.');
       }
 
-      var allowedKeys = ['url', 'returnHttpPromise'];
+      var allowedKeys = ['url', 'servers', 'returnHttpPromise'];
       var keys = Object.keys(args);
       keys.forEach(function(key) {
         if (allowedKeys.indexOf(key) < 0) {
-          throw new Error('Invalid configuration key "' + key + "'. Allowed keys are: " +
+          throw new JsonRpcConfigError('Invalid configuration key "' + key + "'. Allowed keys are: " +
             allowedKeys.join(', '));
         }
-        config[key] = args[key];
+        
+        if (key === 'url') {
+          config.servers = [{
+            name: 'main',
+            url: args[key]
+          }];
+        }
+        else {
+          config[key] = args[key];
+        }
       });
     };
 
