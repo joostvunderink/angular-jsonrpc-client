@@ -2,7 +2,7 @@
 
 # Introduction
 
-angular-jsonrpc-client provides a configurable client to perform [JSON-RPC 2.0][JSONRPC2] calls via HTTP.
+angular-jsonrpc-client provides a configurable client to perform [JSON-RPC 2.0][JSONRPC2] calls via HTTP to one or more servers.
 
 [JSONRPC2]: http://www.jsonrpc.org/specification
 
@@ -61,6 +61,7 @@ The client is configured in the Angular configuration phase via the `jsonrpcConf
 # Getting started
 
 ```
+// For a single JSON-RPC server
 angular
     .module('MyApp', ['angular-jsonrpc-client'])
     .config(function(jsonrpcConfigProvider) {
@@ -77,20 +78,63 @@ angular
                 $scope.error = error;
             });
     }]);
+
+// Or for multiple JSON-RPC servers
+angular
+    .module('MyApp', ['angular-jsonrpc-client'])
+    .config(function(jsonrpcConfigProvider) {
+        jsonrpcConfigProvider.set({
+            servers: [
+                {
+                    name: 'first',
+                    url: 'http://example.com:8080/rpc'
+                },
+                {
+                    name: 'second',
+                    url: 'http://example.net:4444/api'
+                }
+            ]
+        });
+    })
+    .controller('MyController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+        jsonrpc.request('first', 'version', {})
+            .then(function(result) {
+                $scope.result = result;
+            })
+            .catch(function(error) {
+                $scope.error = error;
+            });
+    }]);
+
 ```
 
 # Configuration
 
-There are 2 configuration options.
+There are 3 configuration options.
 
 Argument | Mandatory? | Type | Default | Description
 ---------|------------|------|---------|------------
-url | mandatory | string | null | The URL of the JSON-RPC HTTP server.
+url | optional | string | null | The URL of the JSON-RPC HTTP server.
+servers | optional | array | null | A list of backend servers with names.
 returnHttpPromise | optional | boolean | false | Whether to return a `$http` promise or a `$q` promise.
 
-The argument `url` is necessary to configure where the JSON-RPC server can be found.
+You must provide either `url` or `servers` to configure which backend(s) will be used. If you provide the `url` argument, a single backend called `main` will be created internally.
+
+The argument `url` is a string with the URL of the JSON-RPC server.
+
+The argument `servers` is an array of objects. Each object contains two keys: `name` for the symbolic name of this backend, and `url` for the URL of that JSON-RPC server.
 
 The argument `returnHttpPromise` can be used to return a `$http` promise instead of a `$q` promise, if you want to handle the $http errors yourself. See the [Http Promise](#http-promise) section for more information.
+
+# Calling `jsonrpc.request()`
+
+The method `jsonrpc.request()` can be called with either 2 or with 3 arguments:
+
+`jsonrpc.request(serverName, methodName, args)`
+
+`jsonrpc.request(methodName, args)`
+
+If it's called with 2 arguments, the serverName is set to `main` internally. This is the same internal name as when you call jsonrpcConfig with the `url` parameter.
 
 # Return value
 
@@ -169,8 +213,6 @@ Now you can open the example html files in your browser and the calls should wor
 
 # TODO
 
-- Finish the documentation
-- Add more examples
 - Maybe add support for JSON-RPC v1?
 - Add support for JSON-RPC over TCP
 

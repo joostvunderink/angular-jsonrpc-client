@@ -6,7 +6,7 @@ describe('jsonrpc module', function() {
     it('should have the default configuration', function(done) {
       inject(function(jsonrpcConfig) {
         expect(Object.keys(jsonrpcConfig).length).to.equal(2);
-        expect(jsonrpcConfig.backends.length).to.equal(0);
+        expect(jsonrpcConfig.servers.length).to.equal(0);
         expect(jsonrpcConfig.returnHttpPromise).to.be.false;
         done();
       });
@@ -40,7 +40,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -84,7 +84,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with http promise return value using then/catch', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -125,7 +125,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with http promise return value using success/error', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -187,7 +187,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for server error', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -242,7 +242,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for connection refused', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -283,7 +283,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for 404', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -324,7 +324,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for 500 other error', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -366,7 +366,7 @@ describe('jsonrpc module', function() {
 
     describe('jsonrpc.request with jsonrpc promise return value for an unknown error', function() {
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'main',
           url: url,
         }],
@@ -407,7 +407,7 @@ describe('jsonrpc module', function() {
     });
   });
 
-  describe('jsonrpc.request for multiple backends', function() {
+  describe('jsonrpc.request for multiple servers', function() {
     var methodName = 'version';
     var args = {};
     function _getHttpData(id) {
@@ -432,15 +432,15 @@ describe('jsonrpc module', function() {
 
     var url = 'http://example.com:80/rpc';
     describe('jsonrpc.request with jsonrpc promise return value', function() {
-      var firstBackendName = 'first';
-      var secondBackendName = 'second';
+      var firstServerName = 'first';
+      var secondServerName = 'second';
       var mockConfig = {
-        backends: [{
-          name: firstBackendName,
+        servers: [{
+          name: firstServerName,
           url: 'http://does.not.matter'
         },
         {
-          name: secondBackendName,
+          name: secondServerName,
           url: url
         }],
         returnHttpPromise: false
@@ -460,7 +460,7 @@ describe('jsonrpc module', function() {
           var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
                                                   .respond(httpData.returnValue);
 
-          jsonrpc.request(secondBackendName, methodName, args)
+          jsonrpc.request(secondServerName, methodName, args)
             .then(function(data) {
               // In this case, we get a resolved 'result' object. Therefore, we can call
               // .version on it directly.
@@ -480,10 +480,10 @@ describe('jsonrpc module', function() {
       });
     });
 
-    describe('jsonrpc.request to invalid backend', function() {
-      var invalidBackendName = 'invalid';
+    describe('jsonrpc.request to invalid server', function() {
+      var invalidServerName = 'invalid';
       var mockConfig = {
-        backends: [{
+        servers: [{
           name: 'first',
           url: 'http://does.not.matter'
         },
@@ -508,13 +508,13 @@ describe('jsonrpc module', function() {
           var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
                                                   .respond(httpData.returnValue);
 
-          jsonrpc.request(invalidBackendName, methodName, args)
+          jsonrpc.request(invalidServerName, methodName, args)
             .then(function(data) {
               done('should not get here');
             })
             .catch(function(err) {
               expect(err.name).to.equal(jsonrpc.ERROR_TYPE_CONFIG);
-              expect(err.message).to.equal('Backend "invalid" has not been configured.');
+              expect(err.message).to.equal('Server "invalid" has not been configured.');
               done();
             });
 
