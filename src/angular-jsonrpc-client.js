@@ -35,6 +35,7 @@
   function jsonrpc($q, $http, jsonrpcConfig) {
     return {
       request              : request,
+      setHeaders           : setHeaders,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
       ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
@@ -60,6 +61,10 @@
         }
       }
       return null;
+    }
+
+    function setHeaders(headers){
+        jsonrpcConfig.headers= angular.extend(jsonrpcConfig.headers, headers);
     }
 
     function request(arg1, arg2, arg3) {
@@ -100,6 +105,8 @@
        data: inputData
       };
 
+      req.headers = angular.extend(req.headers, jsonrpcConfig.headers);
+
       var promise = $http(req);
 
       if (jsonrpcConfig.returnHttpPromise) {
@@ -110,9 +117,9 @@
         // 1. Call was a success.
         // 2. Call was received by the server. Server returned an error.
         // 3. Call did not arrive at the server.
-        // 
+        //
         // 2 is a JsonRpcServerError, 3 is a JsonRpcTransportError.
-        // 
+        //
         // We are assuming that the server can use either 200 or 500 as
         // http return code in situation 2. That depends on the server
         // implementation and is not determined by the JSON-RPC spec.
@@ -165,13 +172,15 @@
       }
 
       return deferred.promise;
-    }    
+      
+    }
   }
 
   function jsonrpcConfig() {
     var config = {
       servers: [],
-      returnHttpPromise: false
+      returnHttpPromise: false,
+      headers: {}
     };
 
     this.set = function(args) {
@@ -179,7 +188,7 @@
         throw new Error('Argument of "set" must be an object.');
       }
 
-      var allowedKeys = ['url', 'servers', 'returnHttpPromise'];
+      var allowedKeys = ['url', 'servers', 'returnHttpPromise', 'headers'];
       var keys = Object.keys(args);
       keys.forEach(function(key) {
         if (allowedKeys.indexOf(key) < 0) {
