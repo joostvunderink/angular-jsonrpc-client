@@ -63,8 +63,23 @@
       return null;
     }
 
-    function setHeaders(headers){
-        jsonrpcConfig.headers= angular.extend(jsonrpcConfig.headers, headers);
+    function setHeaders(headers, serverName) {
+      if (typeof serverName != 'undefined') {
+        for (var i = 0; i < jsonrpcConfig.servers.length; i++){
+          if (jsonrpcConfig.servers[i].name === serverName) {
+            Object.keys(headers).forEach(function (key) {
+              jsonrpcConfig.servers[i].headers[key] = headers[key];
+            });
+          }
+        }
+      }
+      else {
+        for (var j = 0; j < jsonrpcConfig.servers.length; j++) {
+          Object.keys(headers).forEach(function (key) {
+            jsonrpcConfig.servers[j].headers[key] = headers[key];
+          });
+        }
+      }
     }
 
     function request(arg1, arg2, arg3) {
@@ -105,7 +120,7 @@
        data: inputData
       };
 
-      req.headers = angular.extend(req.headers, jsonrpcConfig.headers);
+      req.headers = angular.extend(req.headers, backend.headers);
 
       var promise = $http(req);
 
@@ -179,8 +194,7 @@
   function jsonrpcConfig() {
     var config = {
       servers: [],
-      returnHttpPromise: false,
-      headers: {}
+      returnHttpPromise: false
     };
 
     this.set = function(args) {
@@ -188,7 +202,7 @@
         throw new Error('Argument of "set" must be an object.');
       }
 
-      var allowedKeys = ['url', 'servers', 'returnHttpPromise', 'headers'];
+      var allowedKeys = ['url', 'servers', 'returnHttpPromise'];
       var keys = Object.keys(args);
       keys.forEach(function(key) {
         if (allowedKeys.indexOf(key) < 0) {
