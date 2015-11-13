@@ -5,27 +5,27 @@
     <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.16/angular.js"></script>
     <script src="../src/angular-jsonrpc-client.js"></script>
     <script>
-        var firstBackendUrl = 'http://localhost:5080/rpc';
-        var secondBackendUrl = 'http://localhost:6123/rpc';
+        var firstServerUrl = 'http://localhost:5080/rpc';
+        var secondServerUrl = 'http://localhost:6123/rpc';
         angular
             .module('TestApp', ['angular-jsonrpc-client'])
             .config(function(jsonrpcConfigProvider) {
                 console.info(jsonrpcConfigProvider);
                 jsonrpcConfigProvider.set({
-                    backends: [{
+                    servers: [{
                         name: 'first',
-                        url: firstBackendUrl,
+                        url: firstServerUrl,
                     },
                     {
                         name: 'second',
-                        url: secondBackendUrl,
+                        url: secondServerUrl,
                     }],
                     returnHttpPromise: false
                 });
             })
             .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
-                $scope.firstBackendUrl = firstBackendUrl;
-                $scope.secondBackendUrl = secondBackendUrl;
+                $scope.firstServerUrl = firstServerUrl;
+                $scope.secondServerUrl = secondServerUrl;
                 $scope.result = '';
                 $scope.methodCall = 'version';
 
@@ -45,8 +45,8 @@
 </head>
 <body ng-app="TestApp">
     <div ng-controller="TestController">
-        <p>First Backend: <code>{{ firstBackendUrl }}</code></p>
-        <p>Second Backend: <code>{{ secondBackendUrl }}</code></p>
+        <p>First Server: <code>{{ firstServerUrl }}</code></p>
+        <p>Second Server: <code>{{ secondServerUrl }}</code></p>
         <p>Method name: <input type="text" ng-model="methodCall">
             <button ng-click="performCall('first')">Call on first backend</button>
             <button ng-click="performCall('second')">Call on second backend</button></p>
