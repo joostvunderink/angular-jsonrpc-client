@@ -64,19 +64,24 @@
     }
 
     function setHeaders(headers, serverName) {
-      if (typeof serverName != 'undefined') {
-        for (var i = 0; i < jsonrpcConfig.servers.length; i++){
+      for (var i = 0; i < jsonrpcConfig.servers.length; i++) {
+        if (typeof serverName != 'undefined') {
           if (jsonrpcConfig.servers[i].name === serverName) {
+            if (typeof jsonrpcConfig.servers[i].headers === 'undefined') {
+              jsonrpcConfig.servers[i].headers = {};
+            }
             Object.keys(headers).forEach(function (key) {
               jsonrpcConfig.servers[i].headers[key] = headers[key];
             });
+            return;
           }
         }
-      }
-      else {
-        for (var j = 0; j < jsonrpcConfig.servers.length; j++) {
+        else {
+          if (typeof jsonrpcConfig.servers[i].headers === 'undefined') {
+            jsonrpcConfig.servers[i].headers = {};
+          }
           Object.keys(headers).forEach(function (key) {
-            jsonrpcConfig.servers[j].headers[key] = headers[key];
+            jsonrpcConfig.servers[i].headers[key] = headers[key];
           });
         }
       }
@@ -213,7 +218,8 @@
         if (key === 'url') {
           config.servers = [{
             name: 'main',
-            url: args[key]
+            url: args[key],
+            headers:{}
           }];
         }
         else {
