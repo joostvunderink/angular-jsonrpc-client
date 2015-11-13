@@ -67,9 +67,6 @@
       for (var i = 0; i < jsonrpcConfig.servers.length; i++) {
         if (typeof serverName != 'undefined') {
           if (jsonrpcConfig.servers[i].name === serverName) {
-            if (typeof jsonrpcConfig.servers[i].headers === 'undefined') {
-              jsonrpcConfig.servers[i].headers = {};
-            }
             Object.keys(headers).forEach(function (key) {
               jsonrpcConfig.servers[i].headers[key] = headers[key];
             });
@@ -77,9 +74,6 @@
           }
         }
         else {
-          if (typeof jsonrpcConfig.servers[i].headers === 'undefined') {
-            jsonrpcConfig.servers[i].headers = {};
-          }
           Object.keys(headers).forEach(function (key) {
             jsonrpcConfig.servers[i].headers[key] = headers[key];
           });
@@ -214,7 +208,6 @@
           throw new JsonRpcConfigError('Invalid configuration key "' + key + "'. Allowed keys are: " +
             allowedKeys.join(', '));
         }
-        
         if (key === 'url') {
           config.servers = [{
             name: 'main',
@@ -225,7 +218,13 @@
         else {
           config[key] = args[key];
         }
+
       });
+      for (var i = 0; i < config.servers.length; i++) {
+        if (typeof config.servers[i].headers === 'undefined') {
+          config.servers[i].headers = {};
+        }
+      }
     };
 
     this.$get = function() {
