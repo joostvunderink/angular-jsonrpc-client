@@ -1,0 +1,56 @@
+<html>
+<head>
+    <title>angular-jsonrpc-client example 1</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.3.16/angular.js"></script>
+    <script src="../src/angular-jsonrpc-client.js"></script>
+    <script>
+        var url = 'http://localhost:5080/rpc';
+        angular
+            .module('TestApp', ['angular-jsonrpc-client'])
+            .config(function(jsonrpcConfigProvider) {
+                jsonrpcConfigProvider.set({
+                    servers: [{
+                        name: 'main',
+                        url: url,
+                        headers: {
+                            test: 'this is a test header'
+                        }
+                    }],
+                    returnHttpPromise: false
+                });
+            })
+            .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+                $scope.url = url;
+                $scope.result = '';
+                $scope.methodCall = 'showHeaders';
+
+                $scope.performCall = function() {
+                    $scope.result = '';
+                    $scope.error = '';
+                    jsonrpc.request($scope.methodCall, {})
+                        .then(function(result) {
+                            $scope.result = result;
+                        })
+                        .catch(function(error) {
+                            $scope.error = error;
+                        });
+                };
+            }]);
+    </script>
+</head>
+<body ng-app="TestApp">
+    <div ng-controller="TestController">
+        <p>Server: <code>{{ url }}</code></p>
+        <p>Sending header: <code>test: This is a test header</code>
+        <p>Method name: <input type="text" ng-model="methodCall">
+            <button ng-click="performCall()">Call now</button></p>
+        <hr>
+        <p ng-show="result">JSON-RPC result:</p>
+        <pre>{{ result }}</pre>
+        <p ng-show="error">JSON-RPC error:</p>
+        <pre>{{ error }}</pre>
+        <p ng-show="error.message === 'Connection refused at http://localhost:5080/rpc'" style="background-color: #ffb0b8;">It looks like the local JSON-RPC server is not running. If this is indeed the case, please start it.</p>
+    </div>
+</body>
+</html>
