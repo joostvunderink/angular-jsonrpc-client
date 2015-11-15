@@ -35,6 +35,7 @@
   function jsonrpc($q, $http, jsonrpcConfig) {
     return {
       request              : request,
+      setHeaders           : setHeaders,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
       ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
@@ -60,6 +61,24 @@
         }
       }
       return null;
+    }
+
+    function setHeaders(headers, serverName) {
+      for (var i = 0; i < jsonrpcConfig.servers.length; i++) {
+        if (typeof serverName != 'undefined') {
+          if (jsonrpcConfig.servers[i].name === serverName) {
+            Object.keys(headers).forEach(function (key) {
+              jsonrpcConfig.servers[i].headers[key] = headers[key];
+            });
+            return;
+          }
+        }
+        else {
+          Object.keys(headers).forEach(function (key) {
+            jsonrpcConfig.servers[i].headers[key] = headers[key];
+          });
+        }
+      }
     }
 
     function request(arg1, arg2, arg3) {
@@ -100,6 +119,8 @@
        data: inputData
       };
 
+      req.headers = angular.extend(req.headers, backend.headers);
+
       var promise = $http(req);
 
       if (jsonrpcConfig.returnHttpPromise) {
@@ -110,9 +131,9 @@
         // 1. Call was a success.
         // 2. Call was received by the server. Server returned an error.
         // 3. Call did not arrive at the server.
-        // 
+        //
         // 2 is a JsonRpcServerError, 3 is a JsonRpcTransportError.
-        // 
+        //
         // We are assuming that the server can use either 200 or 500 as
         // http return code in situation 2. That depends on the server
         // implementation and is not determined by the JSON-RPC spec.
@@ -165,7 +186,8 @@
       }
 
       return deferred.promise;
-    }    
+      
+    }
   }
 
   function jsonrpcConfig() {
@@ -186,17 +208,23 @@
           throw new JsonRpcConfigError('Invalid configuration key "' + key + "'. Allowed keys are: " +
             allowedKeys.join(', '));
         }
-        
         if (key === 'url') {
           config.servers = [{
             name: 'main',
-            url: args[key]
+            url: args[key],
+            headers:{}
           }];
         }
         else {
           config[key] = args[key];
         }
+
       });
+      for (var i = 0; i < config.servers.length; i++) {
+        if (typeof config.servers[i].headers === 'undefined') {
+          config.servers[i].headers = {};
+        }
+      }
     };
 
     this.$get = function() {
