@@ -90,13 +90,17 @@
       }
 
       var inputData = _getInputData(methodName, args);
+      var headers = angular.extend(
+        backend.headers,
+        {
+           'Content-Type': 'application/json',
+        }
+      );
 
       var req = {
        method: 'POST',
        url: backend.url,
-       headers: {
-         'Content-Type': 'application/json'
-       },
+       headers: headers,
        data: inputData
       };
 
@@ -183,21 +187,54 @@
       var keys = Object.keys(args);
       keys.forEach(function(key) {
         if (allowedKeys.indexOf(key) < 0) {
-          throw new JsonRpcConfigError('Invalid configuration key "' + key + "'. Allowed keys are: " +
+          throw new JsonRpcConfigError('Invalid configuration key "' + key + '". Allowed keys are: ' +
             allowedKeys.join(', '));
         }
         
         if (key === 'url') {
           config.servers = [{
             name: 'main',
-            url: args[key]
+            url: args[key],
+            headers: {}
           }];
+        }
+        else if (key === 'servers') {
+          config.servers = getServers(args[key]);
         }
         else {
           config[key] = args[key];
         }
       });
     };
+
+    function getServers(data) {
+      if (!(data instanceof Array)) {
+        throw new JsonRpcConfigError('Argument "servers" must be an array.');
+      }
+      var servers = [];
+
+      data.forEach(function(d) {
+        if (!d.name) {
+          throw new JsonRpcConfigError('Item in "servers" argument must contain "name" field.');
+        }
+        if (!d.url) {
+          throw new JsonRpcConfigError('Item in "servers" argument must contain "url" field.');
+        }
+        var server = {
+          name: d.name,
+          url: d.url,
+        };
+        if (d.hasOwnProperty('headers')) {
+          server.headers = d.headers;
+        }
+        else {
+          server.headers = {};
+        }
+        servers.push(server);
+      });
+
+      return servers;
+    }
 
     this.$get = function() {
       return config;
