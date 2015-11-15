@@ -8,7 +8,9 @@
   "keywords": [
     "countries"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "should": "^7.1.1"
+  },
   "devDependencies": {
     "body-parser": "^1.14.1",
     "chai": "^1.10.0",

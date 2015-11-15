@@ -1,14 +1,125 @@
 'use strict';
 describe('jsonrpc module', function() {
-  beforeEach(module('angular-jsonrpc-client'));
+  var cfg;
+  beforeEach(module('angular-jsonrpc-client', function(jsonrpcConfigProvider) {
+    cfg = jsonrpcConfigProvider;
+  }));
+
 
   describe('jsonrpcConfig read', function() {
     it('should have the default configuration', function(done) {
       inject(function(jsonrpcConfig) {
-        expect(Object.keys(jsonrpcConfig).length).to.equal(2);
-        expect(jsonrpcConfig.servers.length).to.equal(0);
-        expect(jsonrpcConfig.returnHttpPromise).to.be.false;
+        jsonrpcConfig.should.have.keys(['servers', 'returnHttpPromise']);
+        jsonrpcConfig.servers.should.have.length(0);
+        jsonrpcConfig.returnHttpPromise.should.be.false;
         done();
+      });
+    });
+
+    var testData = [
+      {
+        name: 'setting URL',
+        args: {
+          url: 'http://example.com'
+        },
+        expectedConfig: {
+          servers: [{
+            name: 'main',
+            url: 'http://example.com',
+            headers: {}
+          }],
+          returnHttpPromise: false
+        }
+      },
+      {
+        name: 'setting URL and returnHttpPromise',
+        args: {
+          url: 'http://example.com',
+          returnHttpPromise: true
+        },
+        expectedConfig: {
+          servers: [{
+            name: 'main',
+            url: 'http://example.com',
+            headers: {}
+          }],
+          returnHttpPromise: true
+        }
+      },
+      {
+        name: 'setting servers',
+        args: {
+          servers: [{
+            name: 'first',
+            url: 'http://example.com/1',
+            headers: {
+              'first': 'yes'
+            }
+          }]
+        },
+        expectedConfig: {
+          servers: [{
+            name: 'first',
+            url: 'http://example.com/1',
+            headers: {
+              'first': 'yes'
+            }
+          }],
+          returnHttpPromise: false
+        }
+      },
+    ];
+
+    testData.forEach(function(tc) {
+      it('should have correct config: ' + tc.name, function(done) {
+        inject(function(jsonrpcConfig) {
+          cfg.set(tc.args);
+          cfg.$get().should.eql(tc.expectedConfig);
+          done();
+        });
+      });
+    });
+
+    var testDataErrors = [
+      {
+        name: 'invalid key',
+        args: {
+          invalid: 'value'
+        },
+        expectedError: /Invalid configuration key "invalid"./,
+      },
+      {
+        name: 'server with missing name',
+        args: {
+          servers: [{
+            'url': 'http://example.com/api'
+          }]
+        },
+        expectedError: /must contain "name" field/,
+      },
+      {
+        name: 'server with missing url',
+        args: {
+          servers: [{
+            'name': 'test'
+          }]
+        },
+        expectedError: /must contain "url" field/,
+      },
+    ];
+
+    testDataErrors.forEach(function(tc) {
+      it('should error for: ' + tc.name, function(done) {
+        inject(function(jsonrpcConfig) {
+          try {
+            cfg.set(tc.args);
+          }
+          catch(e) {
+            e.name.should.equal('JsonRpcConfigError');
+            e.message.should.match(tc.expectedError);
+          }
+          done();
+        });
       });
     });
   });
@@ -43,6 +154,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -63,19 +175,16 @@ describe('jsonrpc module', function() {
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
-              // In this case, we get a resolved 'result' object. Therefore, we can call
-              // .version on it directly.
-              expect(typeof(data)).to.equal('object');
-              expect(Object.keys(data).length).to.equal(1);
-              expect(data.version).to.equal('1.7.9');
+              // In this case, we get a resolved 'result' object. Therefore, it contains
+              // only the version key with its value.
+              data.should.eql({ version: '1.7.9' });
               done();
             })
             .catch(function(err) {
               // should not come here
-              console.log(err);
+              console.error(err);
               done(err);
             });
-
           $httpBackend.flush();
         });
       });
@@ -87,6 +196,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: true
       };
@@ -109,12 +219,16 @@ describe('jsonrpc module', function() {
             .then(function(response) {
               // In this case, we get the $http response. In this, there is a 'data'
               // object which contains the version.
-              expect(response.data.result.version).to.equal('1.7.9');
+              response.data.should.eql({
+                jsonrpc: '2.0',
+                id: 2,
+                result: { version: '1.7.9' }
+              });
               done();
             })
             .catch(function(err) {
               // should not come here
-              console.log(err);
+              console.error(err);
               done(err);
             });
 
@@ -128,6 +242,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: true
       };
@@ -148,14 +263,110 @@ describe('jsonrpc module', function() {
 
           jsonrpc.request(methodName, args)
             .success(function(data, status, headers, config) {
-              expect(status).to.equal(200);
-              expect(data.id).to.equal(id);
-              expect(data.result.version).to.equal('1.7.9');
+              status.should.equal(200);
+              data.id.should.equal(id);
+              data.result.should.eql({ version: '1.7.9' });
               done();
             })
             .error(function(err) {
               // should not come here
-              console.log(err);
+              console.error(err);
+              done(err);
+            });
+
+          $httpBackend.flush();
+        });
+      });
+    });
+
+    describe('jsonrpc.request with extra headers', function() {
+      var configuredHeaders = {
+        test: 'one two three'
+      }
+      var mockConfig = {
+        servers: [{
+          name: 'main',
+          url: url,
+          headers: configuredHeaders,
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should perform a jsonrpc call with extra headers', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          var jsonrpcRequestHandler = $httpBackend.expect(
+            httpData.expected.method,
+            httpData.expected.url,
+            httpData.expected.body, function(headers) {
+              return headers.test === configuredHeaders.test
+            })
+            .respond(httpData.returnValue);
+
+          jsonrpc.request(methodName, args)
+            .then(function(data) {
+              data.should.eql({ version: '1.7.9' });
+              done();
+            })
+            .catch(function(err) {
+              // should not come here
+              console.error(err);
+              done(err);
+            });
+
+          $httpBackend.flush();
+        });
+      });
+    });
+
+    describe('jsonrpc.request with extra headers should ignore Content-Type header', function() {
+      var configuredHeaders = {
+        'Content-Type': 'text/xml'
+      }
+      var mockConfig = {
+        servers: [{
+          name: 'main',
+          url: url,
+          headers: configuredHeaders,
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should not overwrite the "Content-Type" header', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          var jsonrpcRequestHandler = $httpBackend.expect(
+            httpData.expected.method,
+            httpData.expected.url,
+            httpData.expected.body, function(headers) {
+              return headers['Content-Type'] === 'application/json'
+            })
+            .respond(httpData.returnValue);
+
+          jsonrpc.request(methodName, args)
+            .then(function(data) {
+              data.should.eql({ version: '1.7.9' });
+              done();
+            })
+            .catch(function(err) {
+              // should not come here
+              console.error(err);
               done(err);
             });
 
@@ -190,6 +401,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -221,17 +433,15 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // should not come here
               var err = 'Call succeeded instead of causing an error!';
-              console.log(err);
+              console.error(err);
               done(err);
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_SERVER);
-              expect(err.message).to.equal(errorData.error.message);
-              expect(Object.keys(err.error).length).to.equal(Object.keys(errorData).length);
-              expect(err.error.code).to.equal(errorData.error.code);
-              expect(err.error.message).to.equal(errorData.error.message);
-              expect(err.error.data.item).to.equal(errorData.error.data.item);
-              expect(err.error.data.reason).to.equal(errorData.error.data.reason);
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_SERVER,
+                message: errorData.error.message,
+                error: errorData.error
+              });
               done();
             });
 
@@ -245,6 +455,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -267,12 +478,14 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // should not come here
               var err = 'Call succeeded instead of causing an error!';
-              console.log(err);
+              console.error(err);
               done(err);
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_TRANSPORT);
-              expect(err.message).to.equal('Connection refused at ' + url);
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_TRANSPORT,
+                message: 'Connection refused at ' + url
+              });
               done();
             });
 
@@ -286,6 +499,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -308,12 +522,14 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // should not come here
               var err = 'Call succeeded instead of causing an error!';
-              console.log(err);
+              console.error(err);
               done(err);
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_TRANSPORT);
-              expect(err.message).to.equal('404 not found at ' + url);
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_TRANSPORT,
+                message: '404 not found at ' + url
+              });
               done();
             });
 
@@ -327,6 +543,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -350,12 +567,14 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // should not come here
               var err = 'Call succeeded instead of causing an error!';
-              console.log(err);
+              console.error(err);
               done(err);
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_TRANSPORT);
-              expect(err.message).to.equal('500 internal server error at ' + url + ': ' + errorMessage);
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_TRANSPORT,
+                message: '500 internal server error at ' + url + ': ' + errorMessage
+              });
               done();
             });
 
@@ -369,6 +588,7 @@ describe('jsonrpc module', function() {
         servers: [{
           name: 'main',
           url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -392,12 +612,14 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // should not come here
               var err = 'Call succeeded instead of causing an error!';
-              console.log(err);
+              console.error(err);
               done(err);
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_TRANSPORT);
-              expect(err.message).to.equal('Unknown error. HTTP status: 501, data: ' + errorMessage);
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_TRANSPORT,
+                message: 'Unknown error. HTTP status: 501, data: ' + errorMessage
+              });
               done();
             });
 
@@ -437,11 +659,13 @@ describe('jsonrpc module', function() {
       var mockConfig = {
         servers: [{
           name: firstServerName,
-          url: 'http://does.not.matter'
+          url: 'http://does.not.matter',
+          headers: {},
         },
         {
           name: secondServerName,
-          url: url
+          url: url,
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -464,14 +688,12 @@ describe('jsonrpc module', function() {
             .then(function(data) {
               // In this case, we get a resolved 'result' object. Therefore, we can call
               // .version on it directly.
-              expect(typeof(data)).to.equal('object');
-              expect(Object.keys(data).length).to.equal(1);
-              expect(data.version).to.equal('1.7.9');
+              data.should.eql({ version: '1.7.9' });
               done();
             })
             .catch(function(err) {
               // should not come here
-              console.log(err);
+              console.error(err);
               done(err);
             });
 
@@ -485,11 +707,13 @@ describe('jsonrpc module', function() {
       var mockConfig = {
         servers: [{
           name: 'first',
-          url: 'http://does.not.matter'
+          url: 'http://does.not.matter',
+          headers: {},
         },
         {
           name: 'second',
-          url: 'http://also.matters.not'
+          url: 'http://also.matters.not',
+          headers: {},
         }],
         returnHttpPromise: false
       };
@@ -513,8 +737,10 @@ describe('jsonrpc module', function() {
               done('should not get here');
             })
             .catch(function(err) {
-              expect(err.name).to.equal(jsonrpc.ERROR_TYPE_CONFIG);
-              expect(err.message).to.equal('Server "invalid" has not been configured.');
+              err.should.eql({
+                name: jsonrpc.ERROR_TYPE_CONFIG,
+                message: 'Server "invalid" has not been configured.'
+              });
               done();
             });
 

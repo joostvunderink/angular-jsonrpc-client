@@ -61,7 +61,9 @@ The client is configured in the Angular configuration phase via the `jsonrpcConf
 # Getting started
 
 ```
-// For a single JSON-RPC server
+// For a single JSON-RPC server:
+// (this way of configuring is simple and only recommended for the most
+// basic usage)
 angular
     .module('MyApp', ['angular-jsonrpc-client'])
     .config(function(jsonrpcConfigProvider) {
@@ -91,7 +93,10 @@ angular
                 },
                 {
                     name: 'second',
-                    url: 'http://example.net:4444/api'
+                    url: 'http://example.net:4444/api',
+                    headers: {
+                        'Authorization': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
+                    }
                 }
             ]
         });
@@ -122,7 +127,7 @@ You must provide either `url` or `servers` to configure which backend(s) will be
 
 The argument `url` is a string with the URL of the JSON-RPC server.
 
-The argument `servers` is an array of objects. Each object contains two keys: `name` for the symbolic name of this backend, and `url` for the URL of that JSON-RPC server.
+The argument `servers` is an array of objects. Each object contains three keys: `name` for the symbolic name of this backend, `url` for the URL of that JSON-RPC server, and an optional key `headers` to make the client pass custom header to each request.
 
 The argument `returnHttpPromise` can be used to return a `$http` promise instead of a `$q` promise, if you want to handle the $http errors yourself. See the [Http Promise](#http-promise) section for more information.
 
