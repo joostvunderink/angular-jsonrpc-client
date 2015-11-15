@@ -6,6 +6,17 @@ var bodyParser       = require('body-parser');
 
 function startFirstServer() {
   var app = express();
+
+  // This is a really crappy way to know what the headers were of a request.
+  // (Un)fortunately, inside the jsonRpcMiddlewareServer methods, we don't
+  // have access to the headers. So we use this crappy method, because it
+  // suffices for this simple test script.
+  var mostRecentHeaders = {};
+  app.use(function(req, res, next) {
+    mostRecentHeaders = req.headers;
+    next();
+  });
+
   app.use(CORSHeaders);
   app.use(bodyParser());
 
@@ -13,6 +24,10 @@ function startFirstServer() {
     version: function(obj, callback) {
       console.info('RPC method "version" called.');
       callback(undefined, { version: '0.42.666' });
+    },
+    showHeaders: function(obj, callback) {
+      console.info('RPC method "showHeaders" called.');
+      callback(undefined, { headers: mostRecentHeaders });
     }
   });
 
