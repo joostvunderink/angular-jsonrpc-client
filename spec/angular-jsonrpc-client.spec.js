@@ -441,7 +441,7 @@ describe('jsonrpc module', function() {
                 name: jsonrpc.ERROR_TYPE_SERVER,
                 message: errorData.error.message,
                 error: errorData.error,
-                data: errorData.data
+                data: errorData.error.data
               });
               done();
             });
