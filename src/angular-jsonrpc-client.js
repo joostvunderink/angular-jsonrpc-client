@@ -23,6 +23,7 @@
       this.name    = ERROR_TYPE_SERVER;
       this.message = error.message;
       this.error   = error;
+      this.data    = error.data;
   }
   JsonRpcServerError.prototype = Error.prototype;  
 
