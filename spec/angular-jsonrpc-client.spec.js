@@ -440,7 +440,8 @@ describe('jsonrpc module', function() {
               err.should.eql({
                 name: jsonrpc.ERROR_TYPE_SERVER,
                 message: errorData.error.message,
-                error: errorData.error
+                error: errorData.error,
+                data: errorData.error.data
               });
               done();
             });
