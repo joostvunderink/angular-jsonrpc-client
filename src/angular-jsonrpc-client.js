@@ -13,6 +13,9 @@
   var ERROR_TYPE_TRANSPORT = 'JsonRpcTransportError';
   var ERROR_TYPE_CONFIG = 'JsonRpcConfigError';
   var DEFAULT_SERVER_NAME = 'main';
+  var DEFAULT_HEADERS = {
+     'Content-Type': 'application/json',
+  };
 
   function JsonRpcTransportError(error) {
       this.name = ERROR_TYPE_TRANSPORT;
@@ -35,8 +38,11 @@
   JsonRpcConfigError.prototype = Error.prototype;  
 
   function jsonrpc($q, $http, jsonrpcConfig) {
+    var extraHeaders = {};
+    
     return {
       request              : request,
+      setExtraHeaders      : setExtraHeaders,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
       ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
@@ -56,8 +62,17 @@
     }
 
     function _findServer(serverName) {
+      if (jsonrpcConfig.servers.length === 0) {
+        throw new JsonRpcConfigError('Please configure the jsonrpc client first.');
+      }
+
       var servers = jsonrpcConfig.servers.filter(function(s) { return s.name === serverName; });
-      return servers.length > 0 ? servers[0] : null;
+
+      if (servers.length === 0) {
+        throw new JsonRpcConfigError('Server "' + serverName + '" has not been configured.');
+      }
+
+      return servers[0];
     }
 
     function _determineArguments(args) {
@@ -115,30 +130,35 @@
       };
     }
 
+    function setExtraHeaders(serverName, headers) {
+      var server = _findServer(serverName);
+
+      extraHeaders[server.name] = headers;
+    }
+
     function request(arg1, arg2, arg3) {
       var args = _determineArguments(arguments);
 
       var deferred = $q.defer();
 
-      if (jsonrpcConfig.servers.length === 0) {
-        deferred.reject(new JsonRpcConfigError('Please configure the jsonrpc client first.'));
-        return deferred.promise;
+      var server;
+
+      try {
+        server = _findServer(args.serverName);
       }
-
-      var server = _findServer(args.serverName);
-
-      if (!server) {
-        deferred.reject(new JsonRpcConfigError('Server "' + args.serverName + '" has not been configured.'));
+      catch(err) {
+        deferred.reject(err);
         return deferred.promise;
       }
 
       var inputData = _getInputData(args.methodName, args.methodArgs);
-      var headers = angular.extend(
-        server.headers,
-        {
-           'Content-Type': 'application/json',
-        }
-      );
+      var headers = _determineHeaders(args.serverName);
+
+      function _determineHeaders(serverName) {
+        var extra = extraHeaders[serverName] ? extraHeaders[serverName] : {};
+        var headers = angular.extend(server.headers, extra);
+        return angular.extend(headers, DEFAULT_HEADERS);
+      }
 
       var req = {
        method : 'POST',

@@ -279,7 +279,7 @@ describe('jsonrpc module', function() {
       });
     });
 
-    describe('jsonrpc.request with extra headers', function() {
+    describe('jsonrpc.request with extra headers via config', function() {
       var configuredHeaders = {
         test: 'one two three'
       }
@@ -310,6 +310,56 @@ describe('jsonrpc module', function() {
               return headers.test === configuredHeaders.test
             })
             .respond(httpData.returnValue);
+
+          jsonrpc.request(methodName, args)
+            .then(function(data) {
+              data.should.eql({ version: '1.7.9' });
+              done();
+            })
+            .catch(function(err) {
+              // should not come here
+              console.error(err);
+              done(err);
+            });
+
+          $httpBackend.flush();
+        });
+      });
+    });
+
+    describe('jsonrpc.request with extra headers via setExtraHeaders', function() {
+      var extraHeaders = {
+        test: 'four five six'
+      }
+      var mockConfig = {
+        servers: [{
+          name: 'main',
+          url: url,
+          headers: [],
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should perform a jsonrpc call with extra headers', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          var jsonrpcRequestHandler = $httpBackend.expect(
+            httpData.expected.method,
+            httpData.expected.url,
+            httpData.expected.body, function(headers) {
+              return headers.test === extraHeaders.test
+            })
+            .respond(httpData.returnValue);
+
+          jsonrpc.setExtraHeaders('main', extraHeaders);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
