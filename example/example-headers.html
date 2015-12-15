@@ -32,10 +32,10 @@
                     if ($scope.headerName) {
                         var extraHeaders = {};
                         extraHeaders[$scope.headerName] = $scope.headerValue;
-                        jsonrpc.setExtraHeaders('main', extraHeaders);
+                        jsonrpc.setHeaders('main', extraHeaders);
                     }
                     else {
-                        jsonrpc.setExtraHeaders('main', {});
+                        jsonrpc.setHeaders('main', {});
                     }
 
                     jsonrpc.request($scope.methodCall, {})

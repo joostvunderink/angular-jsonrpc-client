@@ -327,7 +327,7 @@ describe('jsonrpc module', function() {
       });
     });
 
-    describe('jsonrpc.request with extra headers via setExtraHeaders', function() {
+    describe('jsonrpc.request with extra headers via setHeaders', function() {
       var extraHeaders = {
         test: 'four five six'
       }
@@ -359,7 +359,7 @@ describe('jsonrpc module', function() {
             })
             .respond(httpData.returnValue);
 
-          jsonrpc.setExtraHeaders('main', extraHeaders);
+          jsonrpc.setHeaders('main', extraHeaders);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {

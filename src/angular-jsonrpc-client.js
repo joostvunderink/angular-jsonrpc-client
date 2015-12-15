@@ -42,7 +42,7 @@
     
     return {
       request              : request,
-      setExtraHeaders      : setExtraHeaders,
+      setHeaders           : setHeaders,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
       ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
@@ -130,7 +130,7 @@
       };
     }
 
-    function setExtraHeaders(serverName, headers) {
+    function setHeaders(serverName, headers) {
       var server = _findServer(serverName);
 
       extraHeaders[server.name] = headers;

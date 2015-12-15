@@ -143,10 +143,10 @@ If it's called with 2 arguments, the serverName is set to `main` internally. Thi
 
 # Setting headers at run-time
 
-Sometimes, you don't have the authentication headers during the Angular configuration phase yet, for example because you will only receive them as result of a "log in" JSON-RPC call. It is possible to add headers later on, via `jsonrpc.setExtraHeaders(serverName, headers)`. For example:
+Sometimes, you don't have the authentication headers during the Angular configuration phase yet, for example because you will only receive them as result of a "log in" JSON-RPC call. It is possible to add headers later on, via `jsonrpc.setHeaders(serverName, headers)`. For example:
 
 ```
-jsonrpc.setExtraHeaders('main', {
+jsonrpc.setHeaders('main', {
     AuthToken: 'my auth token'
 });
 ```
