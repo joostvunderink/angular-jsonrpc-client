@@ -141,6 +141,16 @@ The method `jsonrpc.request()` can be called with either 2 or with 3 arguments:
 
 If it's called with 2 arguments, the serverName is set to `main` internally. This is the same internal name as when you call jsonrpcConfig with the `url` parameter.
 
+# Setting headers at run-time
+
+Sometimes, you don't have the authentication headers during the Angular configuration phase yet, for example because you will only receive them as result of a "log in" JSON-RPC call. It is possible to add headers later on, via `jsonrpc.setHeaders(serverName, headers)`. For example:
+
+```
+jsonrpc.setHeaders('main', {
+    AuthToken: 'my auth token'
+});
+```
+
 # Return value
 
 By default, the return value of `jsonrpc.request` is a `$q` promise, which resolves into the `result` value of the JSON-RPC response. If anything goes wrong with handling the request, the code ends up in `$q.catch()`.

@@ -28,6 +28,16 @@
                 $scope.performCall = function() {
                     $scope.result = '';
                     $scope.error = '';
+
+                    if ($scope.headerName) {
+                        var extraHeaders = {};
+                        extraHeaders[$scope.headerName] = $scope.headerValue;
+                        jsonrpc.setHeaders('main', extraHeaders);
+                    }
+                    else {
+                        jsonrpc.setHeaders('main', {});
+                    }
+
                     jsonrpc.request($scope.methodCall, {})
                         .then(function(result) {
                             $scope.result = result;
@@ -43,6 +53,7 @@
     <div ng-controller="TestController">
         <p>Server: <code>{{ url }}</code></p>
         <p>Sending header: <code>test: This is a test header</code>
+        <p>Extra custom header - name: <input type="text" ng-model="headerName"> value: <input type="text" ng-model="headerValue"></p>
         <p>Method name: <input type="text" ng-model="methodCall">
             <button ng-click="performCall()">Call now</button></p>
         <hr>
