@@ -184,7 +184,7 @@
       // http return code in situation 2. That depends on the server
       // implementation and is not determined by the JSON-RPC spec.
       promise.success(function(data, status, headers, config) {
-        if (data.result) {
+        if (data.result !== undefined) {
           // Situation 1
           deferred.resolve(data.result);
         }
