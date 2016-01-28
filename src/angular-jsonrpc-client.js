@@ -21,7 +21,7 @@
       this.name = ERROR_TYPE_TRANSPORT;
       this.message = error;
   }
-  JsonRpcTransportError.prototype = Error.prototype;  
+  JsonRpcTransportError.prototype = Error.prototype;
 
   function JsonRpcServerError(error) {
       this.name    = ERROR_TYPE_SERVER;
@@ -29,20 +29,21 @@
       this.error   = error;
       this.data    = error.data;
   }
-  JsonRpcServerError.prototype = Error.prototype;  
+  JsonRpcServerError.prototype = Error.prototype;
 
   function JsonRpcConfigError(error) {
       this.name = ERROR_TYPE_CONFIG;
       this.message = error;
   }
-  JsonRpcConfigError.prototype = Error.prototype;  
+  JsonRpcConfigError.prototype = Error.prototype;
 
   function jsonrpc($q, $http, jsonrpcConfig) {
     var extraHeaders = {};
-    
+
     return {
       request              : request,
       setHeaders           : setHeaders,
+      batch                : batch,
       ERROR_TYPE_SERVER    : ERROR_TYPE_SERVER,
       ERROR_TYPE_TRANSPORT : ERROR_TYPE_TRANSPORT,
       ERROR_TYPE_CONFIG    : ERROR_TYPE_CONFIG,
@@ -90,6 +91,13 @@
           methodArgs: args[2],
         };
       }
+    }
+
+    function _determineHeaders(serverName) {
+      var extra = extraHeaders[serverName] ? extraHeaders[serverName] : {};
+      var server = _findServer(serverName);
+      var headers = angular.extend(server.headers, extra);
+      return angular.extend(headers, DEFAULT_HEADERS);
     }
 
     function _determineErrorDetails(data, status, url) {
@@ -154,12 +162,6 @@
       var inputData = _getInputData(args.methodName, args.methodArgs);
       var headers = _determineHeaders(args.serverName);
 
-      function _determineHeaders(serverName) {
-        var extra = extraHeaders[serverName] ? extraHeaders[serverName] : {};
-        var headers = angular.extend(server.headers, extra);
-        return angular.extend(headers, DEFAULT_HEADERS);
-      }
-
       var req = {
        method : 'POST',
        url    : server.url,
@@ -177,9 +179,9 @@
       // 1. Call was a success.
       // 2. Call was received by the server. Server returned an error.
       // 3. Call did not arrive at the server.
-      // 
+      //
       // 2 is a JsonRpcServerError, 3 is a JsonRpcTransportError.
-      // 
+      //
       // We are assuming that the server can use either 200 or 500 as
       // http return code in situation 2. That depends on the server
       // implementation and is not determined by the JSON-RPC spec.
@@ -206,7 +208,123 @@
       });
 
       return deferred.promise;
-    }    
+    }
+
+    function batch(server) {
+      var _server = server == null ? DEFAULT_SERVER_NAME : server;
+      var _data = [];
+
+      this.add = function(methodName, args) {
+        var data = _getInputData(methodName, args);
+        var req = {
+          deferred: $q.defer(),
+          data: data,
+          id: data.id
+        };
+        _data.push(req);
+
+        if (!jsonrpcConfig.returnHttpPromise) {
+          return req.deferred.promise;
+        }
+      };
+
+      this.send = function () {
+        var deferred = $q.defer();
+
+        var server;
+
+        try {
+          server = _findServer(_server);
+        }
+        catch(err) {
+          deferred.reject(err);
+          return deferred.promise;
+        }
+
+        var headers = _determineHeaders(_server);
+
+        var req = {
+          method: 'POST',
+          url: server.url,
+          headers: headers,
+          data: _getRequestData()
+        };
+
+        var promise = $http(req);
+
+        if (jsonrpcConfig.returnHttpPromise) {
+          return promise;
+        }
+
+        promise.success(function (data, status, headers, config) {
+            var i, length = data.length;
+            for (i = 0; i < length; i++) {
+              var deferred = _getDeferred(data[i].id);
+
+              if (data[i].result !== undefined) {
+                // Situation 1
+                deferred.resolve(data[i].result);
+              }
+              else {
+                // Situation 2
+                deferred.reject(new JsonRpcServerError(data[i].error));
+              }
+            }
+          })
+          .error(function (data, status, headers, config) {
+            var i, length = data.length;
+            for (i = 0; i < length; i++) {
+              var deferred = _getDeferred(data[i].id);
+
+              // Situation 2 or 3.
+              var errorDetails = _determineErrorDetails(data[i], status, server.url);
+
+              if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
+                deferred.reject(new JsonRpcTransportError(errorDetails.message));
+              }
+              else {
+                deferred.reject(new JsonRpcServerError(errorDetails.message));
+              }
+            }
+          });
+
+        return $q.all(_getAllPromises());
+      };
+
+      function _getRequestData() {
+        var data = [];
+        var i, length = _data.length;
+
+        for (i = 0; i < length; i++) {
+          data.push(_data[i].data);
+        }
+
+        return data;
+      }
+
+      function _getDeferred(id) {
+        var i, length = _data.length;
+
+        for (i = 0; i < length; i++) {
+          if (_data[i].id == id) {
+            return _data[i].deferred;
+          }
+        }
+      }
+
+      function _getAllPromises() {
+        var i, length = _data.length;
+        var promises = [];
+
+        for(i = 0; i < length; i++) {
+          promises.push(_data[i].deferred.promise);
+        }
+
+        return promises;
+      }
+
+      return this;
+    }
   }
 
   function jsonrpcConfig() {
@@ -227,7 +345,7 @@
           throw new JsonRpcConfigError('Invalid configuration key "' + key + '". Allowed keys are: ' +
             allowedKeys.join(', '));
         }
-        
+
         if (key === 'url') {
           config.servers = [{
             name: DEFAULT_SERVER_NAME,
