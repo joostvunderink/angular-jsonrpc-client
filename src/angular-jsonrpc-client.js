@@ -223,9 +223,11 @@
         };
         _data.push(req);
 
-        if (!jsonrpcConfig.returnHttpPromise) {
-          return req.deferred.promise;
+        if (jsonrpcConfig.returnHttpPromise) {
+          return data.id;
         }
+
+        return req.deferred.promise;
       };
 
       this.send = function () {
@@ -253,6 +255,7 @@
         var promise = $http(req);
 
         if (jsonrpcConfig.returnHttpPromise) {
+          _data = [];
           return promise;
         }
 
@@ -288,7 +291,10 @@
             }
           });
 
-        return $q.all(_getAllPromises());
+        return $q.all(_getAllPromises())
+          .then(function () {
+            _data = [];
+          });
       };
 
       function _getRequestData() {

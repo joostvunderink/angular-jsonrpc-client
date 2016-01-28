@@ -151,6 +151,46 @@ jsonrpc.setHeaders('main', {
 });
 ```
 
+# JSONRPC Batch Request
+
+To send several Request objects at the same time, the Client may send an Array filled with Request objects.
+
+## Calling `jsonrpc.batch()`
+
+The method `jsonrpc.batch()` can be called with either 0 or with 1 argument:
+
+`jsonrpc.batch(serverName)`
+
+`jsonrpc.batch()`
+
+If it's called with 0 arguments, the serverName is set to `main` internally. This is the same internal name as when you call jsonrpcConfig with the `url` parameter.
+
+The method returns a new `batch` object.
+
+## Using the batch request
+
+To use the batch request, you have to create a new batch object with `jsonrpc.batch()`. You can add new requests with `batch.add(methodName, args)` and send the batch request with `batch.send()`.
+
+The method `batch.add()` returns by default a `$q` promise like `jsonrpc.request()`. If you configure usage of `$http` promise the return value is the id of the request to identify the response.
+
+The method `batch.send()` returns just as `jsonrpc.request()` by default a `$q` promise. The result of the resolved `$q` promise isn't set. After calling `batch.send()` the batch data is cleared.
+
+For example:
+```
+    // Creating new batch
+    var batch = jsonrpc.batch();
+    
+    // Adding requests to batch
+    batch.add("foo.bar", [])
+        .then(handleFooBar);
+    batch.add("bar.foo", [])
+        .then(handleBarFoo);
+        
+    // Send batch request
+    batch.send()
+        .then(handleSend);
+```
+
 # Return value
 
 By default, the return value of `jsonrpc.request` is a `$q` promise, which resolves into the `result` value of the JSON-RPC response. If anything goes wrong with handling the request, the code ends up in `$q.catch()`.
@@ -212,7 +252,7 @@ jsonrpcConfigProvider.set({
 });
 ```
 
-This changes the return value of `jsonrpc.request()` from a `$q` promise into the return value of `$http.request()`. See `examples/example2.html` for a working example of this. Doing this makes your client code more complex and is not recommended.
+This changes the return value of `jsonrpc.request()` and `jsonrpc.batch()` from a `$q` promise into the return value of `$http.request()`. See `examples/example2.html` for a working example of this. Doing this makes your client code more complex and is not recommended.
 
 # Examples
 
