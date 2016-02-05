@@ -1,0 +1,77 @@
+<html>
+<head>
+    <title>angular-jsonrpc-client batch example</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.4.7/angular.js"></script>
+    <script src="../src/angular-jsonrpc-client.js"></script>
+    <script>
+        var url = 'http://localhost:5080/rpc';
+        angular
+            .module('TestApp', ['angular-jsonrpc-client'])
+            .config(function(jsonrpcConfigProvider) {
+                console.info(jsonrpcConfigProvider);
+                jsonrpcConfigProvider.set({
+                    url: url,
+                    returnHttpPromise: false
+                });
+            })
+            .controller('TestController', ['$scope', 'jsonrpc', function($scope, jsonrpc) {
+                $scope.url = url;
+                $scope.result1 = '';
+                $scope.methodCall1 = 'version';
+                $scope.methodCall2 = 'testcall';
+
+                $scope.performCall = function() {
+                    $scope.result1 = '';
+                    $scope.error1 = '';
+
+                    var batch = jsonrpc.batch();
+                    batch.add($scope.methodCall1, {})
+                        .then(function(result) {
+                            console.log('Result 1');
+                            console.info(result);
+                            $scope.result1 = result;
+                        })
+                        .catch(function(error) {
+                            $scope.error1 = error;
+                        });
+                    batch.add($scope.methodCall2, {})
+                        .then(function(result) {
+                            console.log('Result 2');
+                            console.info(result);
+                            $scope.result2 = result;
+                        })
+                        .catch(function(error) {
+                            $scope.error2 = error;
+                        });
+
+                    batch.send()
+                        .then(function(result) {
+                            console.log('Send result');
+                        })
+                        .catch(function(error) {
+                            console.error = error;
+                        });
+                };
+            }]);
+    </script>
+</head>
+<body ng-app="TestApp">
+    <div ng-controller="TestController">
+        <p>Server: <code>{{ url }}</code></p>
+        <p>Method 1 name: <input type="text" ng-model="methodCall1">
+           Method 2 name: <input type="text" ng-model="methodCall2">
+            <button ng-click="performCall()">Call now</button></p>
+        <hr>
+        <p ng-show="result1">JSON-RPC result 1:</p>
+        <pre>{{ result1 }}</pre>
+        <p ng-show="error1">JSON-RPC error 1:</p>
+        <pre>{{ error1 }}</pre>
+        <p ng-show="result2">JSON-RPC result 2:</p>
+        <pre>{{ result2 }}</pre>
+        <p ng-show="error2">JSON-RPC error 2:</p>
+        <pre>{{ error2 }}</pre>
+        <p ng-show="error1.message === 'Connection refused at http://localhost:5080/rpc'" style="background-color: #ffb0b8;">It looks like the local JSON-RPC server is not running. If this is indeed the case, please start it.</p>
+    </div>
+</body>
+</html>
