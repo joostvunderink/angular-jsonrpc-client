@@ -424,7 +424,118 @@ describe('jsonrpc module', function() {
         });
       });
     });
+
+    describe('jsonrpc.batch of 1 with jsonrpc promise return value', function() {
+      var mockConfig = {
+        servers: [{
+          name: 'main',
+          url: url,
+          headers: {},
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should perform a jsonrpc call successfully', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var id = getNextId();
+          var httpData = _getHttpData(id);
+          var $httpBackend = $injector.get('$httpBackend');
+          // Input is an array of requests; return value is an array of responses.
+          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, [httpData.expected.body])
+                                                  .respond([httpData.returnValue]);
+
+          var handler = function(result1) {
+            result1.should.eql({ version: '1.7.9' });
+            done();
+          };
+
+          var batch = jsonrpc.batch();
+          batch.add(methodName, args).then(handler);
+          batch.send()
+            .catch(function(err) {
+              // should not come here
+              console.error(err);
+              done(err);
+            });
+
+          $httpBackend.flush();
+        });
+      });
+    });
+
+    describe('jsonrpc.batch of 2 with jsonrpc promise return value', function() {
+      var mockConfig = {
+        servers: [{
+          name: 'main',
+          url: url,
+          headers: {},
+        }],
+        returnHttpPromise: false
+      };
+
+      beforeEach(function () {
+          module(function ($provide) {
+              $provide.value('jsonrpcConfig', mockConfig);
+          });
+      });
+
+      it('should perform a batch of 2 calls successfully', function(done) {
+        inject(function(jsonrpc, $injector, $http) {
+          var methodName2 = 'secondMethod';
+          var id1 = getNextId();
+          var id2 = getNextId();
+          var httpData1 = _getHttpData(id1);
+          var httpData2 = _getHttpData(id2);
+          httpData2.expected.body.method = methodName2;
+          httpData2.returnValue.result = { second: true };
+
+          var $httpBackend = $injector.get('$httpBackend');
+
+          // Input is an array of requests; return value is an array of responses.
+          $httpBackend.when(httpData1.expected.method, httpData1.expected.url, [httpData1.expected.body, httpData2.expected.body])
+                      .respond([httpData1.returnValue, httpData2.returnValue]);
+
+          // This is a message to future me:
+          //   This way of verifying the results seems rather clumsy.
+          //   Maybe there is a better way, but I don't see how at the moment.
+          var ok1 = false;
+          var ok2 = false;
+          var handler1 = function(result1) {
+            result1.should.eql({ version: '1.7.9' });
+            ok1 = true;
+          };
+          var handler2 = function(result2) {
+            result2.should.eql({ second: true });
+            ok2 = true;
+          };
+
+          var batch = jsonrpc.batch();
+          batch.add(methodName, args).then(handler1);
+          batch.add(methodName2, args).then(handler2);
+          batch.send()
+            .then(function() {
+              ok1.should.be.true;
+              ok2.should.be.true;
+              done();
+            })
+            .catch(function(err) {
+              // should not come here
+              console.error(err);
+              done(err);
+            });
+          $httpBackend.flush();
+        });
+      });
+    });
+
   });
+
 
   describe('jsonrpc.request error scenarios', function() {
     var methodName = 'version';

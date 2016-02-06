@@ -25,6 +25,10 @@ function startFirstServer() {
       console.info('RPC method "version" called.');
       callback(undefined, { version: '0.42.666' });
     },
+    testcall: function(obj, callback) {
+      console.info('RPC method "testcall" called.');
+      callback(undefined, { success: true });
+    },
     showHeaders: function(obj, callback) {
       console.info('RPC method "showHeaders" called.');
       callback(undefined, { headers: mostRecentHeaders });
