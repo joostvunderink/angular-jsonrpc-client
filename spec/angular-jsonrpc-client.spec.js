@@ -170,8 +170,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(httpData.returnValue);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(httpData.returnValue);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -212,8 +212,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(httpData.returnValue);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(httpData.returnValue);
 
           jsonrpc.request(methodName, args)
             .then(function(response) {
@@ -258,8 +258,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(httpData.returnValue);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(httpData.returnValue);
 
           jsonrpc.request(methodName, args)
             .success(function(data, status, headers, config) {
@@ -303,7 +303,7 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.expect(
+          $httpBackend.expect(
             httpData.expected.method,
             httpData.expected.url,
             httpData.expected.body, function(headers) {
@@ -351,7 +351,7 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.expect(
+          $httpBackend.expect(
             httpData.expected.method,
             httpData.expected.url,
             httpData.expected.body, function(headers) {
@@ -401,7 +401,7 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.expect(
+          $httpBackend.expect(
             httpData.expected.method,
             httpData.expected.url,
             httpData.expected.body, function(headers) {
@@ -447,7 +447,7 @@ describe('jsonrpc module', function() {
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
           // Input is an array of requests; return value is an array of responses.
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, [httpData.expected.body])
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, [httpData.expected.body])
                                                   .respond([httpData.returnValue]);
 
           var handler = function(result1) {
@@ -587,8 +587,8 @@ describe('jsonrpc module', function() {
             }
           };
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(500, errorData);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(500, errorData);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -633,8 +633,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(0, null);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(0, null);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -677,8 +677,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(404, null);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(404, null);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -722,8 +722,8 @@ describe('jsonrpc module', function() {
           var httpData = _getHttpData(id);
           var errorMessage = 'Server is misconfigured';
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(500, errorMessage);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(500, errorMessage);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -767,8 +767,8 @@ describe('jsonrpc module', function() {
           var httpData = _getHttpData(id);
           var errorMessage = 'Database corrupt';
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(501, errorMessage);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(501, errorMessage);
 
           jsonrpc.request(methodName, args)
             .then(function(data) {
@@ -843,8 +843,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(httpData.returnValue);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(httpData.returnValue);
 
           jsonrpc.request(secondServerName, methodName, args)
             .then(function(data) {
@@ -891,8 +891,8 @@ describe('jsonrpc module', function() {
           var id = getNextId();
           var httpData = _getHttpData(id);
           var $httpBackend = $injector.get('$httpBackend');
-          var jsonrpcRequestHandler = $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
-                                                  .respond(httpData.returnValue);
+          $httpBackend.when(httpData.expected.method, httpData.expected.url, httpData.expected.body)
+                      .respond(httpData.returnValue);
 
           jsonrpc.request(invalidServerName, methodName, args)
             .then(function(data) {
