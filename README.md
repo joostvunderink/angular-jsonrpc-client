@@ -271,3 +271,9 @@ Now you can open the example html files in your browser and the calls should wor
 - Maybe add support for JSON-RPC v1?
 - Add support for JSON-RPC over TCP
 
+# Contributors
+
+The following people have contributed code to this module:
+
+- [Gerrit Kaul](https://github.com/GerritK)
+- [Jens](https://github.com/derfux)
