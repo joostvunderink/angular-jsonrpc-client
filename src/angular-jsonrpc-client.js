@@ -260,36 +260,34 @@
         }
 
         promise.success(function (data, status, headers, config) {
-            var i, length = data.length;
-            for (i = 0; i < length; i++) {
-              var deferred = _getDeferred(data[i].id);
+          data.forEach(function(d) {
+            var deferred = _getDeferred(d.id);
 
-              if (data[i].result !== undefined) {
-                // Situation 1
-                deferred.resolve(data[i].result);
-              }
-              else {
-                // Situation 2
-                deferred.reject(new JsonRpcServerError(data[i].error));
-              }
+            if (d.result !== undefined) {
+              // Situation 1
+              deferred.resolve(d.result);
             }
-          })
-          .error(function (data, status, headers, config) {
-            var i, length = data.length;
-            for (i = 0; i < length; i++) {
-              var deferred = _getDeferred(data[i].id);
-
-              // Situation 2 or 3.
-              var errorDetails = _determineErrorDetails(data[i], status, server.url);
-
-              if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
-                deferred.reject(new JsonRpcTransportError(errorDetails.message));
-              }
-              else {
-                deferred.reject(new JsonRpcServerError(errorDetails.message));
-              }
+            else {
+              // Situation 2
+              deferred.reject(new JsonRpcServerError(d.error));
             }
           });
+        })
+        .error(function (data, status, headers, config) {
+          data.forEach(function(d) {
+            var deferred = _getDeferred(d.id);
+
+            // Situation 2 or 3.
+            var errorDetails = _determineErrorDetails(d, status, server.url);
+
+            if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
+              deferred.reject(new JsonRpcTransportError(errorDetails.message));
+            }
+            else {
+              deferred.reject(new JsonRpcServerError(errorDetails.message));
+            }
+          });
+        });
 
         return $q.all(_getAllPromises())
           .then(function () {
@@ -298,35 +296,24 @@
       };
 
       function _getRequestData() {
-        var data = [];
-        var i, length = _data.length;
-
-        for (i = 0; i < length; i++) {
-          data.push(_data[i].data);
-        }
-
-        return data;
+        return _data.map(function(d) {
+          return d.data;
+        });
       }
 
       function _getDeferred(id) {
-        var i, length = _data.length;
-
-        for (i = 0; i < length; i++) {
-          if (_data[i].id == id) {
-            return _data[i].deferred;
-          }
+        var found = _data.filter(function(d) {
+          return d.id === id;
+        });
+        if (found.length === 1) {
+          return found[0].deferred;
         }
       }
 
       function _getAllPromises() {
-        var i, length = _data.length;
-        var promises = [];
-
-        for(i = 0; i < length; i++) {
-          promises.push(_data[i].deferred.promise);
-        }
-
-        return promises;
+        return _data.map(function(d) {
+          return d.deferred.promise;
+        });
       }
 
       return this;
