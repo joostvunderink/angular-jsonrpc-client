@@ -32,6 +32,13 @@ function startFirstServer() {
     showHeaders: function(obj, callback) {
       console.info('RPC method "showHeaders" called.');
       callback(undefined, { headers: mostRecentHeaders });
+    },
+    slowRequest: function(obj, callback) {
+      console.info('RPC method "slowRequest" called.');
+      var delay = 4000;
+      setTimeout(function() {
+        callback(undefined, { success: true, delay: delay });
+      }, delay);
     }
   });
 

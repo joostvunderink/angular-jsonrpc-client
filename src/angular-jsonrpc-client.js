@@ -77,7 +77,10 @@
     }
 
     function _determineArguments(args) {
-      if (args.length === 2) {
+      if (typeof(args[0]) === 'object') {
+        return args[0];
+      }
+      else if (args.length === 2) {
         return {
           serverName: DEFAULT_SERVER_NAME,
           methodName: args[0],
@@ -127,6 +130,9 @@
           errorMessage = '500 internal server error at ' + url + ': ' + data;
         }
       }
+      else if (status === -1) {
+        errorMessage = 'Timeout or cancelled';
+      }
       else {
         // Situation 3
         errorMessage = 'Unknown error. HTTP status: ' + status + ', data: ' + data;
@@ -168,6 +174,13 @@
        headers: headers,
        data   : inputData
       };
+
+
+      if (args.config) {
+        Object.keys(args.config).forEach(function(key) {
+          req[key] = args.config[key];
+        })
+      }
 
       var promise = $http(req);
 

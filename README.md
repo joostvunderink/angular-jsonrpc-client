@@ -133,13 +133,24 @@ The argument `returnHttpPromise` can be used to return a `$http` promise instead
 
 # Calling `jsonrpc.request()`
 
-The method `jsonrpc.request()` can be called with either 2 or with 3 arguments:
+The method `jsonrpc.request()` can be called with 1, 2 or 3 arguments:
 
-`jsonrpc.request(serverName, methodName, args)`
+`jsonrpc.request(requestObject)`
 
 `jsonrpc.request(methodName, args)`
 
+`jsonrpc.request(serverName, methodName, args)`
+
 If it's called with 2 arguments, the serverName is set to `main` internally. This is the same internal name as when you call jsonrpcConfig with the `url` parameter.
+
+If called with 1 argument, you can use the following keys:
+
+Key | Description
+----|------------
+serverName | The name of the server
+methodName | The method
+methodArgs | Arguments of the method call
+config     | An object with key/value pairs that will be passed to $http
 
 # Setting headers at run-time
 
@@ -253,6 +264,27 @@ jsonrpcConfigProvider.set({
 ```
 
 This changes the return value of `jsonrpc.request()` and `jsonrpc.batch()` from a `$q` promise into the return value of `$http.request()`. See `examples/example2.html` for a working example of this. Doing this makes your client code more complex and is not recommended.
+
+# Cancelling a JSON-RPC call
+
+By using the 1 argument way of calling `jsonrpc.request`, it's possible to pass any options to the internal `$http` request that's made. You can use this to cancel a JSON-RPC call.
+
+```
+    var canceller = $q.defer();
+
+    $scope.cancelRequest = function() {
+        canceller.resolve('cancelled');
+    };
+
+    jsonrpc.request({
+        serverName: serverName,
+        methodName: methodName,
+        methodArgs: methodArgs,
+        config: {
+            timeout: canceller.promise
+        }
+    });
+```
 
 # Examples
 
