@@ -1,7 +1,7 @@
 {
   "name": "angular-jsonrpc-client",
   "description": "A JSON-RPC 2.0 client for AngularJS",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "private": true,
   "main": "src/angular-jsonrpc-client.js",
   "author": "Joost Vunderink",
