@@ -199,6 +199,17 @@
       // http return code in situation 2. That depends on the server
       // implementation and is not determined by the JSON-RPC spec.
       promise.success(function(data, status, headers, config) {
+        // In some cases, it is unfortunately possible to end up in
+        // promise.success with data being undefined.
+        // This is likely caused either by a bug in the $http service
+        // or by incorrect usage of $http interceptors.
+        if (!data) {
+          return deferred.reject(
+            'Unknown error, possibly caused by incorrectly configured $http interceptor. ' +
+            'See https://github.com/joostvunderink/angular-jsonrpc-client/issues/16 for ' +
+            'more information.');
+        }
+        
         if (data.result !== undefined) {
           // Situation 1
           deferred.resolve(data.result);
