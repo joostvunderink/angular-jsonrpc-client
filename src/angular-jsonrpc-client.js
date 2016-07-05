@@ -298,19 +298,28 @@
           });
         })
         .error(function (data, status, headers, config) {
-          data.forEach(function(d) {
-            var deferred = _getDeferred(d.id);
+          if(data != null) {
+            data.forEach(function (d) {
+              var deferred = _getDeferred(d.id);
 
-            // Situation 2 or 3.
-            var errorDetails = _determineErrorDetails(d, status, server.url);
+              // Situation 2 or 3.
+              var errorDetails = _determineErrorDetails(d, status, server.url);
 
-            if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
+              if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
+                deferred.reject(new JsonRpcTransportError(errorDetails.message));
+              }
+              else {
+                deferred.reject(new JsonRpcServerError(errorDetails.message));
+              }
+            });
+          } else {
+            var errorDetails = _determineErrorDetails(data, status, server.url);
+            data = _getRequestData();
+            data.forEach(function (d) {
+              var deferred = _getDeferred(d.id);
               deferred.reject(new JsonRpcTransportError(errorDetails.message));
-            }
-            else {
-              deferred.reject(new JsonRpcServerError(errorDetails.message));
-            }
-          });
+            });
+          }
         });
 
         return $q.all(_getAllPromises())
