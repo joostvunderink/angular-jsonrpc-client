@@ -286,6 +286,30 @@ By using the 1 argument way of calling `jsonrpc.request`, it's possible to pass 
     });
 ```
 
+# Monitoring progress
+
+In the same way you can cancel a request, you can also monitor the progress of a request. You will need AngularJS 1.5.4 or later for this to work. Here is an example:
+
+```
+    function logProgress(progressEvent) {
+        console.log('Received progress event:');
+        console.log(progressEvent);
+    }
+
+    jsonrpc.request({
+        serverName: serverName,
+        methodName: methodName,
+        methodArgs: methodArgs,
+        config: {
+            eventHandlers: {
+                progress: logProgress
+            }
+        }
+    });
+```
+
+Note that you might need to use `uploadEventHandlers` if `eventHandlers` does not do the trick. See https://docs.angularjs.org/api/ng/service/$http for more information.
+
 # Examples
 
 In the `examples` dir, there are a few examples. You can look at the code there, and you can also see the code in action. To do that, you need to make sure that a the local example JSON-RPC server is running:

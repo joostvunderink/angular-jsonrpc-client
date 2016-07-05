@@ -39,7 +39,11 @@ function startFirstServer() {
       setTimeout(function() {
         callback(undefined, { success: true, delay: delay });
       }, delay);
-    }
+    },
+    length: function(obj, callback) {
+      console.info('RPC method "length" called.');
+      callback(undefined, { length: obj.data.length });
+    },
   });
 
   app.use('/rpc', jsonRpcMiddlewareServer.transport.middleware);

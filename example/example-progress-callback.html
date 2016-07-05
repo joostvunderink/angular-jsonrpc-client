@@ -1,0 +1,88 @@
+<html>
+<head>
+    <title>angular-jsonrpc-client cancel request example</title>
+
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/angular.js/1.5.7/angular.js"></script>
+    <script src="../src/angular-jsonrpc-client.js"></script>
+    <script>
+        var url = 'http://localhost:5080/rpc';
+        angular
+            .module('TestApp', ['angular-jsonrpc-client'])
+            .config(function(jsonrpcConfigProvider) {
+                console.info(jsonrpcConfigProvider);
+                jsonrpcConfigProvider.set({
+                    url: url,
+                    returnHttpPromise: false
+                });
+            })
+            .controller('TestController', ['$scope', 'jsonrpc', '$q', '$http', function($scope, jsonrpc, $q, $http) {
+                $scope.url = url;
+                $scope.result = '';
+                $scope.methodCall = 'length';
+
+                $scope.canceller = null;
+                $scope.cancel = function() {
+                    if ($scope.canceller) {
+                        $scope.message = 'Cancelling request.';
+                        $scope.canceller.resolve('user cancelled');
+                        $scope.canceller = null;
+                    }
+                };
+
+                $scope.performCall = function() {
+                    $scope.canceller = $q.defer();
+                    $scope.result = '';
+                    $scope.error = '';
+                    $scope.message = 'Request sent. Waiting for answer.';
+
+                    var longString = "1234567890";
+                    var iterations = 8;
+                    for (var i = 0; i < iterations; i++) {
+                      longString += longString.concat(longString);
+                    }
+                    jsonrpc.request({
+                        serverName: 'main',
+                        methodName: $scope.methodCall,
+                        methodArgs: {
+                            data: longString
+                        },
+                        config: {
+                            timeout: $scope.canceller.promise,
+                            eventHandlers: {
+                                progress: function(progressEvent) {
+                                    console.log('Received progressEvent:');
+                                    console.log(progressEvent);
+                                    $scope.progressEvent = JSON.stringify(progressEvent);
+                                }
+                            }
+                        }
+                    })
+                        .then(function(result) {
+                            $scope.message = 'Answer received.';
+                            $scope.result = result;
+                        })
+                        .catch(function(error) {
+                            $scope.error = error;
+                        });
+                };
+            }]);
+    </script>
+</head>
+<body ng-app="TestApp">
+    <div ng-controller="TestController">
+        <p>Server: <code>{{ url }}</code></p>
+        <p>Method name: <input type="text" ng-model="methodCall">
+            <button ng-click="performCall()">Call now</button>
+            <button ng-click="cancel()">Cancel now</button></p>
+        <hr>
+        <p>{{ message }}</p>
+        <p ng-show="result">JSON-RPC result:</p>
+        <pre>{{ result }}</pre>
+        <p ng-show="result">Latest progress event (see console log for more info):</p>
+        <pre>{{ progressEvent }}</pre>
+        <p ng-show="error">JSON-RPC error:</p>
+        <pre>{{ error }}</pre>
+        <p ng-show="error.message === 'Connection refused at http://localhost:5080/rpc'" style="background-color: #ffb0b8;">It looks like the local JSON-RPC server is not running. If this is indeed the case, please start it.</p>
+    </div>
+</body>
+</html>
