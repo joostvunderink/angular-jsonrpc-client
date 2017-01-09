@@ -198,18 +198,26 @@
       // We are assuming that the server can use either 200 or 500 as
       // http return code in situation 2. That depends on the server
       // implementation and is not determined by the JSON-RPC spec.
-      promise.success(function(data, status, headers, config) {
+      promise.then(function onSuccess(response) {
+        // Read data, status, headers and config from response object
+        var data = response.data,
+          status = response.status,
+          headers = response.headers,
+          config = response.config
+
         // In some cases, it is unfortunately possible to end up in
         // promise.success with data being undefined.
         // This is likely caused either by a bug in the $http service
         // or by incorrect usage of $http interceptors.
+
+
         if (!data) {
           return deferred.reject(
             'Unknown error, possibly caused by incorrectly configured $http interceptor. ' +
             'See https://github.com/joostvunderink/angular-jsonrpc-client/issues/16 for ' +
             'more information.');
         }
-        
+
         if (data.result !== undefined) {
           // Situation 1
           deferred.resolve(data.result);
@@ -219,7 +227,13 @@
           deferred.reject(new JsonRpcServerError(data.error));
         }
       })
-      .error(function(data, status, headers, config) {
+      .catch(function(response) {
+        // Read data, status, headers and config from response object
+        var data = response.data,
+          status = response.status,
+          headers = response.headers,
+          config = response.config
+
         // Situation 2 or 3.
         var errorDetails = _determineErrorDetails(data, status, server.url);
 
@@ -283,8 +297,8 @@
           return promise;
         }
 
-        promise.success(function (data, status, headers, config) {
-          data.forEach(function(d) {
+        promise.then(function onSuccess(response) {
+          response.data.forEach(function(d) {
             var deferred = _getDeferred(d.id);
 
             if (d.result !== undefined) {
@@ -297,12 +311,12 @@
             }
           });
         })
-        .error(function (data, status, headers, config) {
-          data.forEach(function(d) {
+        .catch(function (response) {
+          response.data.forEach(function(d) {
             var deferred = _getDeferred(d.id);
 
             // Situation 2 or 3.
-            var errorDetails = _determineErrorDetails(d, status, server.url);
+            var errorDetails = _determineErrorDetails(d, response.status, server.url);
 
             if (errorDetails.type === ERROR_TYPE_TRANSPORT) {
               deferred.reject(new JsonRpcTransportError(errorDetails.message));
