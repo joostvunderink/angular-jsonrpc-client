@@ -314,8 +314,9 @@
         });
 
         return $q.all(_getAllPromises())
-          .then(function () {
+          .then(function (res) {
             _data = [];
+            return res;
           });
       };
 
